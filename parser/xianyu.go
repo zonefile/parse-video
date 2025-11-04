@@ -56,7 +56,7 @@ func (x xianyu) parseItemUrl(itemUrl string) (*VideoParseInfo, error) {
 	requestBody := fmt.Sprintf(`data={"itemId":"%s"}`, itemId)
 
 	client := resty.New()
-	cookie := "isg=BMvLH8mjJpv9AHu71x6hQrVGWW-1YN_iBx7PWT3Ip4phXOu-xTBvMmnvMVSymDfa; t=2333a59eb65b62e50a3d096f9de0cff1; cookie2=194c8b5c7e3bde936077f0f5cf5d1884; _samesite_flag_=true; _tb_token_=e509eb531537d; _m_h5_tk=9fbb22f657f07ad2296925d2a9a1077f_1762252389974; _m_h5_tk_enc=808004faf005bb7ef06982abfabb3141"
+	cookie := "1=1;"
 	res, err := client.R().
 		SetHeader(HttpHeaderUserAgent, DefaultUserAgent).
 		SetHeader(HttpHeaderContentType, "application/x-www-form-urlencoded").
