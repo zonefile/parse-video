@@ -24,7 +24,6 @@ const (
 	SourceHaoKan       = "haokan"       // 好看视频
 	SourceRedBook      = "redbook"      // 小红书
 	SourceBiliBili     = "bilibili"     // 哔哩哔哩
-	SourceXianYu       = "xianyu"       // 闲鱼
 )
 
 // http 相关
@@ -195,11 +194,6 @@ var videoSourceInfoMapping = map[string]videoSourceInfo{
 			"b23.tv",
 		},
 		VideoShareUrlParser: biliBili{},
-	},
-	SourceXianYu: {
-		VideoShareUrlDomain: []string{"m.tb.cn"},
-		VideoShareUrlParser: xianyu{},
-		VideoIdParser:       xianyu{},
 	},
 }
 

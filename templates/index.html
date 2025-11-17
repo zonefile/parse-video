@@ -253,7 +253,7 @@
                     <input class="weui-input" type="text" id="url" placeholder="请粘贴视频分享地址" />
                 </div>
                 <div class="btn-group">
-                    <button class="weui-btn weui-btn_primary" onclick="parseVideo()">解析视频</button>
+                    <button class="weui-btn weui-btn_primary" onclick="pasteAndParse()">粘贴并解析</button>
                     <button class="weui-btn weui-btn_default" onclick="clearInput()">清空</button>
                 </div>
             </div>
@@ -283,6 +283,18 @@
             document.getElementById('resultSection').classList.remove('show');
         }
 
+        function copyText(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('文案已复制');
+                }).catch(err => {
+                    showToast('复制失败');
+                });
+            } else {
+                showToast('浏览器不支持复制功能');
+            }
+        }
+
         function downloadAllImages(images) {
             if (!images || images.length === 0) {
                 showToast('没有可下载的图片');
@@ -303,11 +315,35 @@
             showToast(`开始下载 ${images.length} 张图片`);
         }
 
+        async function pasteAndParse() {
+            const urlInput = document.getElementById('url');
+            const currentInput = urlInput.value.trim();
+
+            if (currentInput) {
+                // If there's already content, just parse it.
+                parseVideo();
+            } else {
+                // If input is empty, try to read from clipboard.
+                try {
+                    const text = await navigator.clipboard.readText();
+                    if (text) {
+                        urlInput.value = text;
+                        parseVideo();
+                    } else {
+                        showToast('输入框和剪贴板都为空');
+                    }
+                } catch (err) {
+                    console.error('无法读取剪贴板：', err);
+                    showToast('无法读取剪贴板，请手动粘贴');
+                }
+            }
+        }
+
         function parseVideo() {
             const urlInput = document.getElementById('url').value.trim();
             
             if (!urlInput) {
-                showToast('请输入视频地址');
+                showToast('请输入或粘贴视频地址');
                 return;
             }
 
@@ -325,6 +361,8 @@
             
             resultSection.classList.add('show');
             actionButtons.innerHTML = '<div class="loading">解析中</div>';
+            document.getElementById('gallerySection').innerHTML = '';
+
 
             const xhr = new XMLHttpRequest();
             xhr.open('GET', '/video/share/url/parse?url=' + encodeURIComponent(url), true);
@@ -367,17 +405,18 @@
             showToast('解析成功');
             
             const data = response.data;
-            videoTitle.textContent = data.title || '视频标题';
+            const titleText = data.title || '视频标题';
+            videoTitle.textContent = titleText;
 
             let buttonsHtml = `
-                <a class="action-btn" href="${data.cover_url}" target="_blank" download referrerpolicy="no-referrer">
-                    📷 下载封面
+                <a id="copyTextButton" class="action-btn" href="javascript:void(0)">
+                    📝 复制文案
                 </a>
             `;
 
             if (data.video_url) {
                 buttonsHtml += `
-                    <a class="action-btn" href="${data.video_url}" target="_blank" download referrerpolicy="no-referrer">
+                    <a class="action-btn" href="${data.video_url}" target="_blank" download="video.mp4" referrerpolicy="no-referrer">
                         🎬 下载视频
                     </a>
                 `;
@@ -393,15 +432,24 @@
 
             actionButtons.innerHTML = buttonsHtml;
 
+            // Add listener for the new copy button
+            const copyButton = document.getElementById('copyTextButton');
+            if(copyButton) {
+                copyButton.addEventListener('click', () => {
+                    copyText(titleText);
+                });
+            }
+
+
             if (data.images && data.images.length > 0) {
-                let galleryHtml = '<div class="gallery-title">图集预览</div><div class="gallery-grid">';
+                let galleryHtml = '<div class="gallery-title">图集预览 (点击查看大图)</div><div class="gallery-grid">';
                 
                 data.images.forEach((item, index) => {
                     galleryHtml += `
-                        <div class="gallery-item">
+                        <a href="${item.url}" target="_blank" class="gallery-item">
                             <img src="${item.url}" alt="图片${index + 1}" loading="lazy">
                             ${item.live_photo_url ? '<span class="live-badge">Live</span>' : ''}
-                        </div>
+                        </a>
                     `;
                 });
                 
@@ -416,7 +464,7 @@
 
         document.getElementById('url').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                parseVideo();
+                pasteAndParse();
             }
         });
     </script>
